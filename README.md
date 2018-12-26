@@ -20,6 +20,11 @@ articles containing the visualized countries of capitals with
 python get_country_capitals_texts.py
 ```
 
+The following sections show how to test the Word2Vec implementations locally.\
+For evaluation on a cluster with the whole text file of the dump,
+this file will have to be put into HDFS and the paths and host parameter will have to be 
+adjusted. See the help description of the scripts.
+
 
 ### Spark Word2Vec
 
@@ -35,15 +40,15 @@ spark-submit  ml/visualize_capitals_word2vec.py country_capitals.model country_c
 
 ### Glint Word2Vec
 
-Build ``glint-word2vec-assembly-1.0.jar`` and zip of python binding files 
-``glintword2vec.zip`` from https://github.com/MGabr/glint-word2vec.git.
+Build ``glint-word2vec-assembly-1.0.jar`` and get python binding file 
+``ml_glintword2vec.py`` from https://github.com/MGabr/glint-word2vec.
 
 Train GlintWord2Vec with
 ```
-spark-submit  --jars glint-word2vec-assembly-1.0.jar --py-files glintword2vec.zip  glint/train_word2vec.py country_capitals.txt country_capitals_glint.model
+spark-submit  --jars glint-word2vec-assembly-1.0.jar --py-files ml_glintword2vec.py  glint/train_word2vec.py country_capitals.txt country_capitals_glint.model 127.0.0.1 1000000
 ```
 
 Create country/capitals visualization for GlintWord2Vec with
 ```
-spark-submit  --jars glint-word2vec-assembly-1.0.jar --py-files glintword2vec.zip  glint/visualize_capitals_word2vec.py country_capitals_glint.model country_capitals_glint.png
+spark-submit  --jars glint-word2vec-assembly-1.0.jar --py-files ml_glintword2vec.py  glint/visualize_capitals_word2vec.py country_capitals_glint.model country_capitals_glint.png
 ```

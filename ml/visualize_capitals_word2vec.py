@@ -3,14 +3,19 @@ import matplotlib
 matplotlib.use('agg')
 
 import sys
-from pyspark.sql import SparkSession, Row
-from pyspark.ml.feature import Word2VecModel
+from argparse import ArgumentParser
 from sklearn.decomposition import PCA
 from matplotlib import pyplot
 
 
-# input word2vec model hdfs filepath and output plot filepath
-inp, outp = sys.argv[1:3]
+parser = ArgumentParser(description="Visualize a word2vec model via capital relations using ServerSideGlintWord2Vec.")
+parser.add_argument("modelPath", help="The path of the directory containing the trained model")
+parser.add_argument("visualizationPath", help="The path to save the visualization")
+args = parser.parse_args()
+
+
+from pyspark.sql import SparkSession, Row
+from pyspark.ml.feature import Word2VecModel
 
 
 # initialize spark session with required settings
@@ -31,9 +36,6 @@ def plot_words(model, save_plot_filename=None):
 	words_df = spark.createDataFrame([Row(sentence=[word]) for word in words])
 	vecs = [row.model for row in model.transform(words_df).collect()]
 
-	allVecs = model.getVectors().collect()
-	print("allVecs: " + str(allVecs) + "\n")
-
 	# perform PCA
 	pca = PCA(n_components=2)
 	pca_vecs = pca.fit_transform(vecs)
@@ -42,7 +44,7 @@ def plot_words(model, save_plot_filename=None):
 	pyplot.scatter(pca_vecs[:, 0], pca_vecs[:, 1])
 
 	for country, capital in zip(range(len(countries)), range(len(countries), 2 * len(countries))):
-        	pyplot.plot(pca_vecs[[country, capital], 0], pca_vecs[[country, capital], 1], linestyle="dashed", color="gray")
+		pyplot.plot(pca_vecs[[country, capital], 0], pca_vecs[[country, capital], 1], linestyle="dashed", color="gray")
 
 	for i, word in enumerate(words):
 		pyplot.annotate(word, xy=(pca_vecs[i, 0], pca_vecs[i, 1]))
@@ -55,6 +57,6 @@ def plot_words(model, save_plot_filename=None):
 	pyplot.clf()
 
 
-model = Word2VecModel.load(inp)
-plot_words(model, save_plot_filename=outp)
+model = Word2VecModel.load(args.modelPath)
+plot_words(model, save_plot_filename=args.visualizationPath)
 

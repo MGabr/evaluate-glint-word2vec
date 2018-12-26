@@ -3,19 +3,24 @@ import matplotlib
 matplotlib.use('agg')
 
 import sys
-from pyspark.sql import SparkSession, Row
+from argparse import ArgumentParser
 from sklearn.decomposition import PCA
 from matplotlib import pyplot
+
+
+parser = ArgumentParser(description="Visualize a word2vec model via capital relations using ServerSideGlintWord2Vec.")
+parser.add_argument("modelPath", help="The path of the directory containing the trained model")
+parser.add_argument("visualizationPath", help="The path to save the visualization")
+args = parser.parse_args()
+
+
+from pyspark.sql import SparkSession, Row
 from ml_glintword2vec import ServerSideGlintWord2VecModel
-
-
-# input word2vec model hdfs filepath and output plot filepath
-inp, outp = sys.argv[1:3]
 
 
 # initialize spark session with required settings
 spark = SparkSession.builder \
-        .appName("visualize capitals word2vec") \
+        .appName("visualize capitals glint-word2vec") \
         .config("spark.driver.maxResultSize", "2g") \
         .getOrCreate()
 
@@ -52,6 +57,6 @@ def plot_words(model, save_plot_filename=None):
 	pyplot.clf()
 
 
-model = ServerSideGlintWord2VecModel.load(inp)
-plot_words(model, save_plot_filename=outp)
+model = ServerSideGlintWord2VecModel.load(args.modelPath)
+plot_words(model, save_plot_filename=args.visualizationPath)
 
