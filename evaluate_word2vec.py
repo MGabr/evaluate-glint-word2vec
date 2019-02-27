@@ -31,6 +31,18 @@ def words_and_vecs_from_csv(spark, model, csv_filename):
 	return words1, words2, wordvecs1, wordvecs2
 
 
+def print_word_synonyms(spark, model, csv_filename):
+	words1, _, _, _ = words_and_vecs_from_csv(spark, model, csv_filename)
+
+	# predict synonyms
+	predicted_synonyms = [model.findSynonyms(word1, 5).head(5) for word1 in words1]
+
+	# print predicted synonyms
+	for predicted_synonym, word1 in zip(predicted_synonyms, words1):
+		words = [ps.asDict()["word"].encode("utf-8") for ps in predicted_synonym]
+		similarities = [round(ps.asDict()["similarity"], 4) for ps in predicted_synonym]
+		print("Predicted synonyms {} for {} with similarity {}".format(words, word1.encode("utf-8"), similarities))
+
 def print_word_analogies(spark, model, csv_filename):
 	words1, words2, wordvecs1, wordvecs2 = words_and_vecs_from_csv(spark, model, csv_filename)
 
@@ -42,7 +54,7 @@ def print_word_analogies(spark, model, csv_filename):
 	for predicted_word2, word1 in zip(predicted_words2, words1):
 		words = [pw.asDict()["word"].encode("utf-8") for pw in predicted_word2]
 		similarities = [round(pw.asDict()["similarity"], 4) for pw in predicted_word2]
-		print("Predicted {} for {} with similarity {}".format(words, word1.encode("utf-8"), similarities))
+		print("Predicted analogies {} for {} with similarity {}".format(words, word1.encode("utf-8"), similarities))
 
 
 def plot_word_analogies(spark, model, csv_filename, save_plot_filename=None):
@@ -93,6 +105,7 @@ if args.modelType == "glint":
 else:
 	model = Word2VecModel.load(args.modelPath)
 
+print_word_synonyms(spark, model, args.csvPath)
 print_word_analogies(spark, model, args.csvPath)
 plot_word_analogies(spark, model, args.csvPath, save_plot_filename=args.visualizationPath)
 
