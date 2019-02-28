@@ -110,4 +110,7 @@ print_word_analogies(spark, model, args.csvPath)
 plot_word_analogies(spark, model, args.csvPath, save_plot_filename=args.visualizationPath)
 
 
+if args.modelType == "glint":
+	model.stop()
+
 sc.stop()

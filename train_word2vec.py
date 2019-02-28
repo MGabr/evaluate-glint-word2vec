@@ -62,4 +62,7 @@ model = word2vec.fit(sentences)
 model.save(args.modelPath)
 
 
+if args.modelType == "glint":
+	model.stop()
+
 sc.stop()
