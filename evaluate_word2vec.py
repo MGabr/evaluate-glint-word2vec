@@ -91,7 +91,7 @@ args = parser.parse_args()
 
 # initialize spark session with required settings
 spark = SparkSession.builder \
-	.appName("visualize capitals glint-word2vec") \
+	.appName("evaluate word2vec") \
 	.config("spark.driver.maxResultSize", "2g") \
 	.config("spark.sql.catalogImplementation", "in-memory") \
 	.getOrCreate()

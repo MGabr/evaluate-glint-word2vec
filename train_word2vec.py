@@ -16,9 +16,6 @@ parser.add_argument("--num-partitions",
 parser.add_argument("--num-parameter-servers",
 					help="The number of parameter servers to use. Set to 1 for local mode testing. "
 						 "Only relevant for glint model type", default=5, type=int)
-parser.add_argument("--driver-host",
-					help="The IP address of the driver. Set to \"127.0.0.1\" for local mode testing. "
-						 "Only relevant for glint model type", default="")
 parser.add_argument("--unigram-table-size",
 					help="The size of the unigram table. Set to a lower value if there is not enough memory locally. "
 						 "Only relevant for glint model type", default=100000000, type=int)
@@ -30,7 +27,7 @@ from ml_glintword2vec import ServerSideGlintWord2Vec
 
 # initialize spark session with required settings
 spark = SparkSession.builder \
-	.appName("train glint-word2vec") \
+	.appName("train word2vec") \
 	.config("spark.driver.maxResultSize", "2g") \
 	.config("spark.sql.catalogImplementation", "in-memory") \
 	.getOrCreate()
@@ -46,7 +43,6 @@ if args.modelType == "glint":
 		inputCol="sentence",
 		outputCol="model",
 		numParameterServers=args.num_parameter_servers,
-		parameterServerMasterHost=args.driver_host,
 		unigramTableSize=args.unigram_table_size
 	)
 else:
