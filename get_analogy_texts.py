@@ -15,9 +15,11 @@ args = parser.parse_args()
 
 if args.wikiPath.endswith(".txt"):
 	inp = open(args.wikiPath, "r")
+	wiki_file = False
 else:
 	wiki = WikiCorpus(args.wikiPath, lemmatize=False, dictionary={})
 	inp = wiki.get_texts()
+	wiki_file = True
 
 try:
 	with open(args.csvPath) as csvfile:
@@ -27,7 +29,10 @@ try:
 			for text in inp:
 				for word_analogy in word_analogies:
 					if word_analogy[0] in text and word_analogy[1] in text:
-						out.write(" ".join(text) + "\n")
+						if wiki_file:
+							out.write(" ".join(text) + "\n")
+						else:
+							out.write(text)
 						remaining_n_articles -= 1
 						break
 				if remaining_n_articles == 0:
