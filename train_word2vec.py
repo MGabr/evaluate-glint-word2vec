@@ -47,7 +47,7 @@ if args.modelType == "glint":
 		outputCol="model",
 		numParameterServers=args.num_parameter_servers,
 		unigramTableSize=args.unigram_table_size,
-		stepSize=args.batchsize
+		batchSize=args.batchsize
 	)
 else:
 	word2vec = Word2Vec(
