@@ -7,7 +7,6 @@ import matplotlib
 matplotlib.use('agg')
 
 from matplotlib import pyplot
-from ml_glintword2vec import ServerSideGlintWord2VecModel
 from pyspark.ml.feature import Word2VecModel
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import udf
@@ -87,6 +86,9 @@ parser.add_argument("modelPath", help="The path of the directory containing the 
 parser.add_argument("modelType", help="The type of model to train", choices=("glint", "ml"))
 parser.add_argument("visualizationPath", help="The path to save the visualization to")
 args = parser.parse_args()
+
+
+from ml_glintword2vec import ServerSideGlintWord2VecModel
 
 
 # initialize spark session with required settings

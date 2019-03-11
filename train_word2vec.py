@@ -12,10 +12,13 @@ parser.add_argument("txtPath", help="The path of the text file to use for traini
 parser.add_argument("modelPath", help="The path to save the trained model to")
 parser.add_argument("modelType", help="The type of model to train", choices=("glint", "ml"))
 parser.add_argument("--num-partitions",
-					help="The number of partitions. Should equal num-executors * executor-cores", default=50, type=int)
+					help="The number of partitions. Should equal num-executors * executor-cores", default=150, type=int)
 parser.add_argument("--num-parameter-servers",
 					help="The number of parameter servers to use. Set to 1 for local mode testing. "
 						 "Only relevant for glint model type", default=5, type=int)
+parser.add_argument("--batchsize",
+					help="The mini-batch size. Too large values might result in exploding gradients and NaN vectors. "
+						 "Only relevant for glint model type", default=10, type=int)
 parser.add_argument("--unigram-table-size",
 					help="The size of the unigram table. Set to a lower value if there is not enough memory locally. "
 						 "Only relevant for glint model type", default=100000000, type=int)
@@ -43,7 +46,8 @@ if args.modelType == "glint":
 		inputCol="sentence",
 		outputCol="model",
 		numParameterServers=args.num_parameter_servers,
-		unigramTableSize=args.unigram_table_size
+		unigramTableSize=args.unigram_table_size,
+		stepSize=args.batchsize
 	)
 else:
 	word2vec = Word2Vec(
