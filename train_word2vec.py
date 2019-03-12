@@ -13,10 +13,14 @@ parser.add_argument("modelPath", help="The path to save the trained model to")
 parser.add_argument("modelType", help="The type of model to train", choices=("glint", "ml"))
 parser.add_argument("--num-partitions",
 					help="The number of partitions. Should equal num-executors * executor-cores", default=150, type=int)
+parser.add_argument("--step-size",
+                    help="The step size / learning rate. For glint model type too large values might result in "
+                         "exploding gradients and NaN vectors", default=0.01875, type=float)
+parser.add_argument("--vector-size", help="The vector size", default=100, type=int)
 parser.add_argument("--num-parameter-servers",
 					help="The number of parameter servers to use. Set to 1 for local mode testing. "
 						 "Only relevant for glint model type", default=5, type=int)
-parser.add_argument("--batchsize",
+parser.add_argument("--batch-size",
 					help="The mini-batch size. Too large values might result in exploding gradients and NaN vectors. "
 						 "Only relevant for glint model type", default=10, type=int)
 parser.add_argument("--unigram-table-size",
@@ -45,16 +49,20 @@ if args.modelType == "glint":
 		numPartitions=args.num_partitions,
 		inputCol="sentence",
 		outputCol="model",
+		stepSize=args.step_size,
+		vectorSize=args.vector_size,
 		numParameterServers=args.num_parameter_servers,
 		unigramTableSize=args.unigram_table_size,
-		batchSize=args.batchsize
+		batchSize=args.batch_size
 	)
 else:
 	word2vec = Word2Vec(
 		seed=1,
 		numPartitions=args.num_partitions,
 		inputCol="sentence",
-		outputCol="model"
+		outputCol="model",
+		stepSize=args.step_size,
+		vectorSize=args.vector_size
 	)
 
 sentences = sc.textFile(args.txtPath).map(lambda row: Row(sentence=row.split(" "))).toDF()
