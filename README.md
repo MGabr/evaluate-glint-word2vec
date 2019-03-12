@@ -1,4 +1,4 @@
-# Spark Word2Vec vs Glint Word2Vec
+# Glint-Word2Vec Evaluation
 
 Scripts for comparing the default Spark ML implementation of Word2Vec with a custom 
 implementation of Word2Vec using the Glint parameter server with custom specialized 
@@ -8,8 +8,13 @@ operations for efficient distributed Word2Vec computation.
 
 ### Evaluation sets
 
-The word analogies to evaluate will need to be specified as csv file. An example is 
-``example_country_capitals_de.csv`` which consists of german country-capital relations.
+The models are evaluated on the SimLex 999 and wordsim 353 evaluation sets.
+The original english sets are provided as well as german sets from 
+https://github.com/iraleviant/eval-multilingual-simlex.
+
+Further word analogies to evaluate and visualize via PCA will need to be specified as csv file. 
+An example is ``example_country_capitals_de.csv`` which consists of german country-capital 
+relations. The country-capital relations from the original Word2Vec paper are also provided.
 
 ### Data sets
 
@@ -32,10 +37,10 @@ and ``--py-files`` options of ``spark-submit``.
 ### Example
 
 An example for evaluating Glint Word2vec with default settings (150 partitions, 5 parameter servers)
-on a german wikipedia dump on country-capitals analogies is the following.
+on a german wikipedia dump on the original Word2Vec country-capitals analogies is the following.
 
 ```bash
 python3 get_texts.py dewiki-latest-pages-articles.xml.bz2 dewiki-latest-pages-articles.txt
 spark-submit --num-executors 5 --executor-cores 30 --jars glint-word2vec-assembly-1.0.jar --py-files ml_glintword2vec.zip train_word2vec.py dewiki-latest-pages-articles.txt dewiki-latest-pages-articles.model glint
-spark-submit --num-executors 5 --executor-cores 1 --jars glint-word2vec-assembly-1.0.jar --py-files ml_glintword2vec.zip evaluate_word2vec.py evaluation/country_capitals_de.csv dewiki-latest-pages-articles.model glint country_capitals_de.png
+spark-submit --num-executors 5 --executor-cores 1 --jars glint-word2vec-assembly-1.0.jar --py-files ml_glintword2vec.zip evaluate_word2vec.py evaluation/country_capitals_de.csv de dewiki-latest-pages-articles.model glint country_capitals_de.png
 ```
