@@ -42,6 +42,7 @@ def print_word_synonyms(spark, model, csv_filename):
 		similarities = [round(ps.asDict()["similarity"], 4) for ps in predicted_synonym]
 		print("Predicted synonyms {} for {} with similarity {}".format(words, word1.encode("utf-8"), similarities))
 
+
 def print_word_analogies(spark, model, csv_filename):
 	words1, words2, wordvecs1, wordvecs2 = words_and_vecs_from_csv(spark, model, csv_filename)
 

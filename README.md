@@ -9,7 +9,7 @@ operations for efficient distributed Word2Vec computation.
 ### Evaluation sets
 
 The word analogies to evaluate will need to be specified as csv file. An example is 
-``country_capitals.csv`` which consists of german country-capital relations.
+``example_country_capitals_de.csv`` which consists of german country-capital relations.
 
 ### Data sets
 
@@ -17,7 +17,7 @@ As dataset to train Word2Vec on you can download a wikipedia dump and then extra
 to a text file with ``get_texts.py``. For testing, a subset of articles from a wikipedia 
 dump can be created with ``get_analogy_texts.py``. Another possibility is getting 
 specific wikipedia articles with ``get_articles_texts.py``. The articles to get will need
-to be specified as txt file. An example is ``country_capitals_articles.txt``.
+to be specified as txt file. An example is ``example_country_capitals_de_articles.txt``.
 
 ### Training and evaluating
 
