@@ -3,3 +3,5 @@ matplotlib
 sklearn
 pyspark==2.3.2
 wikipedia
+scipy
+numpy

@@ -2,7 +2,7 @@
 
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 
-from pyspark.ml.feature import Word2Vec
+from pyspark.ml.feature import Word2Vec, StopWordsRemover
 from pyspark.sql import SparkSession
 from pyspark.sql.types import Row
 
@@ -16,6 +16,8 @@ parser.add_argument("--num-partitions",
 parser.add_argument("--step-size",
                     help="The step size / learning rate. For glint model type too large values might result in "
                          "exploding gradients and NaN vectors", default=0.01875, type=float)
+parser.add_argument("--stop-word-lang", help="The language to use for removing stop words. "
+											  "Empty string means no stop word removal", default="")
 parser.add_argument("--vector-size", help="The vector size", default=100, type=int)
 parser.add_argument("--num-parameter-servers",
 					help="The number of parameter servers to use. Set to 1 for local mode testing. "
@@ -65,7 +67,19 @@ else:
 		vectorSize=args.vector_size
 	)
 
-sentences = sc.textFile(args.txtPath).map(lambda row: Row(sentence=row.split(" "))).toDF()
+
+if args.stop_word_lang:
+	sentences = sc.textFile(args.txtPath).map(lambda row: Row(sentence_raw=row.split(" "))).toDF()
+	remover = StopWordsRemover(
+		inputCol="sentence_raw",
+		outputCol="sentence",
+		stopWords=StopWordsRemover.loadDefaultStopWords(args.stop_word_lang)
+	)
+	sentences = remover.transform(sentences)
+else:
+	sentences = sc.textFile(args.txtPath).map(lambda row: Row(sentence=row.split(" "))).toDF()
+
+
 model = word2vec.fit(sentences)
 model.save(args.modelPath)
 
