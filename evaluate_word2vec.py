@@ -12,7 +12,7 @@ from numpy import dot, any
 from numpy.linalg import norm
 from pyspark.ml.feature import Word2VecModel
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import udf
+from pyspark.sql.functions import udf, lower, col
 from pyspark.sql.types import StructType, StructField, StringType, ArrayType
 from sklearn.decomposition import PCA
 from scipy.stats import spearmanr
@@ -21,6 +21,7 @@ from scipy.stats import spearmanr
 def words_and_vecs_from_csv(spark, model, csv_filename):
     schema = StructType([StructField("word1", StringType(), False), StructField("word2", StringType(), False)])
     df = spark.read.csv(csv_filename, header=False, schema=schema)
+    df = df.select(lower(col("word1")).alias("word1"), lower(col("word2")).alias("word2"))
 
     rows = df.collect()
     words1 = [row.word1 for row in rows]
@@ -36,6 +37,7 @@ def words_and_vecs_from_csv(spark, model, csv_filename):
 
 def wordvecs_from_tsv(spark, model, tsv_filename):
     df = spark.read.option("sep", "\t").csv(tsv_filename, header=True)
+    df = df.select(lower(col("word1")).alias("word1"), lower(col("word2")).alias("word2"))
 
     as_array = udf(lambda s: [s], ArrayType(StringType(), False))
     df = df.withColumn("word1", as_array("word1")).withColumn("word2", as_array("word2"))
