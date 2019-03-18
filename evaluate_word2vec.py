@@ -51,7 +51,7 @@ def wordvecs_from_tsv(spark, model, tsv_filename):
     wordvecs.update(wordvecs1)
     wordvecs.update(wordvecs2)
     # remove words with zero vectors
-    wordvecs = {word: vector for (word, vector) in wordvecs1.items() if any(vector)}
+    wordvecs = {word: vector for (word, vector) in wordvecs.items() if any(vector)}
     return wordvecs
 
 
