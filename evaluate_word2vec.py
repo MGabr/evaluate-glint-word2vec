@@ -85,7 +85,7 @@ def print_word_analogies(words1, words2, predicted_words2):
         words = [pw.asDict()["word"].encode("utf-8") for pw in predicted_word2]
         similarities = [round(pw.asDict()["similarity"], 4) for pw in predicted_word2]
         print("Predicted analogies {} for {} with similarity {}".format(words, word1.encode("utf-8"), similarities))
-        if words[0] == word2:
+        if words[0] == word2.encode("utf-8"):
             num_correct += 1
     print("Predicted {} of {} analogies correctly".format(num_correct, len(words1)))
 
