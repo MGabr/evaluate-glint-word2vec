@@ -22,6 +22,10 @@ parser.add_argument("--vector-size", help="The vector size", default=100, type=i
 parser.add_argument("--num-parameter-servers",
 					help="The number of parameter servers to use. Set to 1 for local mode testing. "
 						 "Only relevant for glint model type", default=5, type=int)
+parser.add_argument("--parameter-server-host",
+					help="The host master host of the running parameter servers. "
+						 "If this is not set a standalone parameter server cluster is started in this Spark application. "
+						 "Only relevant for glint model type", default="")
 parser.add_argument("--batch-size",
 					help="The mini-batch size. Too large values might result in exploding gradients and NaN vectors. "
 						 "Only relevant for glint model type", default=10, type=int)
@@ -56,6 +60,7 @@ if args.modelType == "glint":
 		stepSize=args.step_size,
 		vectorSize=args.vector_size,
 		numParameterServers=args.num_parameter_servers,
+		parameterServerHost=args.parameter_server_host,
 		unigramTableSize=args.unigram_table_size,
 		batchSize=args.batch_size
 	)
@@ -87,6 +92,6 @@ model.save(args.modelPath)
 
 
 if args.modelType == "glint":
-	model.stop()
+	model.stop(terminateOtherClients=True)
 
 sc.stop()
