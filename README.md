@@ -34,6 +34,10 @@ and ``--py-files`` options of ``spark-submit``.
 ``train_word2vec.py`` can then be used to train a Glint or standard Spark ML model and 
 ``evaluate_word2vec.py`` to evaluate and visualize word analogies using a model.
 
+In most cases you will want to remove stop words before training a model to avoid 
+exploding gradients. This can be done with the ``--stop-word-lang`` and 
+``--stop-word-file`` options.
+
 ### Example
 
 An example for evaluating Glint Word2Vec with default settings (150 partitions, 5 parameter servers)
@@ -41,7 +45,7 @@ on a german wikipedia dump on the original Word2Vec country-capitals analogies i
 
 ```bash
 python3 get_texts.py dewiki-latest-pages-articles.xml.bz2 dewiki-latest-pages-articles.txt
-spark-submit --num-executors 5 --executor-cores 30 --jars glint-word2vec-assembly-1.0.jar --py-files ml_glintword2vec.zip train_word2vec.py dewiki-latest-pages-articles.txt dewiki-latest-pages-articles.model glint --stop-word-lang de
+spark-submit --num-executors 5 --executor-cores 30 --jars glint-word2vec-assembly-1.0.jar --py-files ml_glintword2vec.zip train_word2vec.py dewiki-latest-pages-articles.txt dewiki-latest-pages-articles.model glint --stop-word-lang de --stop-word-file stopwords/dewiki.txt
 spark-submit --num-executors 5 --executor-cores 1 --jars glint-word2vec-assembly-1.0.jar --py-files ml_glintword2vec.zip evaluate_word2vec.py evaluation/country_capitals_de.csv de dewiki-latest-pages-articles.model glint country_capitals_de.png
 ```
 
@@ -49,7 +53,7 @@ To evaluate Glint Word2Vec with parameter servers running in a separate Spark ap
 start them beforehand with a command like
 
 ```bash
-spark-submit --num-executors 5 --executor-cores 20 --class glint.Main glint-word2vec-assembly-1.0.jar
+spark-submit --num-executors 5 --executor-cores 20 --class glint.Main glint-word2vec-assembly-1.0.jar spark
 ```
 
 Afterwards ``--parameter-server-host`` followed by the host of the parameter server master 

@@ -16,8 +16,10 @@ parser.add_argument("--num-partitions",
 parser.add_argument("--step-size",
                     help="The step size / learning rate. For glint model type too large values might result in "
                          "exploding gradients and NaN vectors", default=0.01875, type=float)
-parser.add_argument("--stop-word-lang", help="The language to use for removing stop words. "
-											  "Empty string means no stop word removal", default="")
+parser.add_argument("--stop-word-lang", help="The language to use for removing default stop words. "
+											  "Empty string means no default stop word removal", default="")
+parser.add_argument("--stop-word-file", help="The (additional) stop word file to use for removing stop words. "
+											 "Empty string means no stop word removal with file", default="")
 parser.add_argument("--vector-size", help="The vector size", default=100, type=int)
 parser.add_argument("--num-parameter-servers",
 					help="The number of parameter servers to use. Set to 1 for local mode testing. "
@@ -75,13 +77,15 @@ else:
 	)
 
 
-if args.stop_word_lang:
+if args.stop_word_lang or args.stop_word_file:
 	sentences = sc.textFile(args.txtPath).map(lambda row: Row(sentence_raw=row.split(" "))).toDF()
-	remover = StopWordsRemover(
-		inputCol="sentence_raw",
-		outputCol="sentence",
-		stopWords=StopWordsRemover.loadDefaultStopWords(args.stop_word_lang)
-	)
+	stopWords = []
+	if args.stop_word_lang:
+		stopWords += StopWordsRemover.loadDefaultStopWords(args.stop_word_lang)
+	if args.stop_word_file:
+		with open(args.stop_word_file, "r") as file:
+			stopWords += file.read().splitlines()
+	remover = StopWordsRemover(inputCol="sentence_raw", outputCol="sentence", stopWords=stopWords)
 	sentences = remover.transform(sentences)
 else:
 	sentences = sc.textFile(args.txtPath).map(lambda row: Row(sentence=row.split(" "))).toDF()
