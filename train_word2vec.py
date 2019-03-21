@@ -83,8 +83,7 @@ if args.stop_word_lang or args.stop_word_file:
 	if args.stop_word_lang:
 		stopWords += StopWordsRemover.loadDefaultStopWords(args.stop_word_lang)
 	if args.stop_word_file:
-		with open(args.stop_word_file, "r") as file:
-			stopWords += file.read().splitlines()
+		stopWords += sc.textFile(args.stop_word_file).collect()
 	remover = StopWordsRemover(inputCol="sentence_raw", outputCol="sentence", stopWords=stopWords)
 	sentences = remover.transform(sentences)
 else:
