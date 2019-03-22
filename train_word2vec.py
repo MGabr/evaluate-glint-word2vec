@@ -43,7 +43,7 @@ from ml_glintword2vec import ServerSideGlintWord2Vec
 # initialize spark session with required settings
 spark = SparkSession.builder \
 	.appName("train word2vec") \
-	.config("spark.driver.maxResultSize", "2g") \
+	.config("spark.driver.maxResultSize", "8g") \
 	.config("spark.kryoserializer.buffer.max", "2047m") \
 	.config("spark.rpc.message.maxSize", "2047") \
 	.config("spark.sql.catalogImplementation", "in-memory") \
