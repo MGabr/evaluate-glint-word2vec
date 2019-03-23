@@ -47,6 +47,7 @@ spark = SparkSession.builder \
 	.config("spark.kryoserializer.buffer.max", "2047m") \
 	.config("spark.rpc.message.maxSize", "2047") \
 	.config("spark.sql.catalogImplementation", "in-memory") \
+    .config("spark.dynamicAllocation.enabled", "false") \
 	.getOrCreate()
 
 sc = spark.sparkContext
