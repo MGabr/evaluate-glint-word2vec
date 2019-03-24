@@ -38,12 +38,24 @@ else:
 
 
 words = sentences.rdd.map(lambda row: row.sentence).flatMap(lambda x:  x)
+
 wordCounts = words.map(lambda w: (w, 1)) \
     .reduceByKey(add) \
     .filter(lambda w: w[1] >= args.min_count) \
-    .collect()
+
+vocabCount = wordCounts.count()
+
+wordCount = wordCounts.reduce(lambda x, y: ("", x[1] + y[1]))[1]
+
+wordCounts = wordCounts.collect()
 wordCounts.sort(key=lambda x: x[1], reverse=True)
 topWordCounts = wordCounts[:args.top_count]
 
+
+sc.stop()
+
+
+print("Vocabulary size: " + str(vocabCount))
+print("Words in corpus: " + str(wordCount))
 for wordCount in topWordCounts:
     print(wordCount[0].encode("utf-8") + ": " + str(wordCount[1]))
