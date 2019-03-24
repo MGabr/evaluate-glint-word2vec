@@ -58,4 +58,4 @@ sc.stop()
 print("Vocabulary size: " + str(vocabCount))
 print("Words in corpus: " + str(wordCount))
 for wordCount in topWordCounts:
-    print(wordCount[0].encode("utf-8") + ": " + str(wordCount[1]))
+    print(str(wordCount[0].encode("utf-8")) + ": " + str(wordCount[1]))
