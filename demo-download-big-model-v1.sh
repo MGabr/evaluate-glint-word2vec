@@ -30,7 +30,7 @@ for i in `ls 1-billion-word-language-modeling-benchmark-r13output/training-monol
 done
 
 wget http://ebiquity.umbc.edu/redirect/to/resource/id/351/UMBC-webbase-corpus
-tar -zxvf umbc_webbase_corpus.tar.gz webbase_all/*.txt
+tar -zxvf UMBC-webbase-corpus webbase_all/*.txt
 for i in `ls webbase_all`; do
   normalize_text < webbase_all/$i >> data.txt
 done
@@ -81,3 +81,7 @@ while (<>) {
   }
 }
 ' | normalize_text | awk '{if (NF>1) print;}' >> data.txt
+
+gcc word2phrase.c -o word2phrase -lm -pthread -O3 -march=native -funroll-loops
+./word2phrase -train data.txt -output data-phrase.txt -threshold 200 -debug 2
+./word2phrase -train data-phrase.txt -output data-phrase2.txt -threshold 100 -debug 2
