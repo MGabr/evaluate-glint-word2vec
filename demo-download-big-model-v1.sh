@@ -82,6 +82,6 @@ while (<>) {
 }
 ' | normalize_text | awk '{if (NF>1) print;}' >> data.txt
 
-gcc word2phrase.c -o word2phrase -lm -pthread -O3 -march=native -funroll-loops
+gcc ../word2phrase.c -o word2phrase -lm -pthread -O3 -march=native -funroll-loops
 ./word2phrase -train data.txt -output data-phrase.txt -threshold 200 -debug 2
 ./word2phrase -train data-phrase.txt -output data-phrase2.txt -threshold 100 -debug 2
