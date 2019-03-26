@@ -21,6 +21,7 @@ parser.add_argument("--stop-word-lang", help="The language to use for removing d
 parser.add_argument("--stop-word-file", help="The (additional) stop word file to use for removing stop words. "
 											 "Empty string means no stop word removal with file", default="")
 parser.add_argument("--vector-size", help="The vector size", default=100, type=int)
+parser.add_argument("--window-size", help="The window size", default=5, type=int)
 parser.add_argument("--num-parameter-servers",
 					help="The number of parameter servers to use. Set to 1 for local mode testing. "
 						 "Only relevant for glint model type", default=5, type=int)
@@ -62,6 +63,7 @@ if args.modelType == "glint":
 		outputCol="model",
 		stepSize=args.step_size,
 		vectorSize=args.vector_size,
+		windowSize=args.window_size,
 		numParameterServers=args.num_parameter_servers,
 		parameterServerHost=args.parameter_server_host,
 		unigramTableSize=args.unigram_table_size,
@@ -74,7 +76,8 @@ else:
 		inputCol="sentence",
 		outputCol="model",
 		stepSize=args.step_size,
-		vectorSize=args.vector_size
+		vectorSize=args.vector_size,
+		windowSize=args.window_size
 	)
 
 
