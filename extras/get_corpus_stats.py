@@ -13,6 +13,8 @@ parser = ArgumentParser(description="Get the counts of the top words.", formatte
 parser.add_argument("txtPath", help="The path of the text file")
 parser.add_argument("--stop-word-lang", help="The language to use for removing stop words. "
                                              "Empty string means no stop word removal", default="")
+parser.add_argument("--stop-word-file", help="The (additional) stop word file to use for removing stop words. "
+                                             "Empty string means no stop word removal with file", default="")
 parser.add_argument("--min-count", help="The minimum number of times a token must appear", default=5, type=int)
 parser.add_argument("--top-count", help="The number of top words to get the frequency for", default=50, type=int)
 args = parser.parse_args()
@@ -25,13 +27,14 @@ spark = SparkSession.builder \
 sc = spark.sparkContext
 
 
-if args.stop_word_lang:
+if args.stop_word_lang or args.stop_word_file:
     sentences = sc.textFile(args.txtPath).map(lambda row: Row(sentence_raw=row.split(" "))).toDF()
-    remover = StopWordsRemover(
-        inputCol="sentence_raw",
-        outputCol="sentence",
-        stopWords=StopWordsRemover.loadDefaultStopWords(args.stop_word_lang)
-    )
+    stopWords = []
+    if args.stop_word_lang:
+        stopWords += StopWordsRemover.loadDefaultStopWords(args.stop_word_lang)
+    if args.stop_word_file:
+        stopWords += sc.textFile(args.stop_word_file).collect()
+    remover = StopWordsRemover(inputCol="sentence_raw", outputCol="sentence", stopWords=stopWords)
     sentences = remover.transform(sentences)
 else:
     sentences = sc.textFile(args.txtPath).map(lambda row: Row(sentence=row.split(" "))).toDF()
