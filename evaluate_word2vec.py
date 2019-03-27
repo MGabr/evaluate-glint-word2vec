@@ -3,12 +3,13 @@
 from argparse import ArgumentParser
 import codecs
 
+from gensim.models import Word2Vec as GensimWord2Vec
 import matplotlib
 
 matplotlib.use('agg')
 
 from matplotlib import pyplot
-from numpy import dot, any
+from numpy import dot, any, zeros
 from numpy.linalg import norm
 from pyspark.ml.feature import Word2VecModel
 from pyspark.sql import SparkSession
@@ -19,39 +20,63 @@ from scipy.stats import spearmanr
 
 
 def words_and_vecs_from_csv(spark, model, csv_filename):
-    schema = StructType([StructField("word1", StringType(), False), StructField("word2", StringType(), False)])
-    df = spark.read.csv(csv_filename, header=False, schema=schema)
-    df = df.select(lower(col("word1")).alias("word1"), lower(col("word2")).alias("word2"))
+    if spark:
+        schema = StructType([StructField("word1", StringType(), False), StructField("word2", StringType(), False)])
+        df = spark.read.csv(csv_filename, header=False, schema=schema)
+        df = df.select(lower(col("word1")).alias("word1"), lower(col("word2")).alias("word2"))
 
-    rows = df.collect()
-    words1 = [row.word1 for row in rows]
-    words2 = [row.word2 for row in rows]
+        rows = df.collect()
+        words1 = [row.word1 for row in rows]
+        words2 = [row.word2 for row in rows]
 
-    as_array = udf(lambda s: [s], ArrayType(StringType(), False))
-    df = df.withColumn("word1", as_array("word1")).withColumn("word2", as_array("word2"))
-    wordvecs1 = [row.model for row in model.transform(df.withColumnRenamed("word1", "sentence")).collect()]
-    wordvecs2 = [row.model for row in model.transform(df.withColumnRenamed("word2", "sentence")).collect()]
+        as_array = udf(lambda s: [s], ArrayType(StringType(), False))
+        df = df.withColumn("word1", as_array("word1")).withColumn("word2", as_array("word2"))
+        wordvecs1 = [row.model for row in model.transform(df.withColumnRenamed("word1", "sentence")).collect()]
+        wordvecs2 = [row.model for row in model.transform(df.withColumnRenamed("word2", "sentence")).collect()]
+    else:
+        words1 = []
+        words2 = []
+        with open(csv_filename, "r") as csv_file:
+            for line in csv_file:
+                row = line.strip("\n").split(",")
+                words1.append(row[0])
+                words2.append(row[1])
+
+        wordvecs1 = [model.wv[word1] if word1 in model.wv else zeros(model.wv.vector_size) for word1 in words1]
+        wordvecs2 = [model.wv[word2] if word2 in model.wv else zeros(model.wv.vector_size) for word2 in words2]
 
     return words1, words2, wordvecs1, wordvecs2
 
 
 def wordvecs_from_tsv(spark, model, tsv_filename):
-    df = spark.read.option("sep", "\t").csv(tsv_filename, header=True)
-    df = df.select(lower(col("word1")).alias("word1"), lower(col("word2")).alias("word2"))
+    if spark:
+        df = spark.read.option("sep", "\t").csv(tsv_filename, header=True)
+        df = df.select(lower(col("word1")).alias("word1"), lower(col("word2")).alias("word2"))
 
-    as_array = udf(lambda s: [s], ArrayType(StringType(), False))
-    df = df.withColumn("word1", as_array("word1")).withColumn("word2", as_array("word2"))
+        as_array = udf(lambda s: [s], ArrayType(StringType(), False))
+        df = df.withColumn("word1", as_array("word1")).withColumn("word2", as_array("word2"))
 
-    wordvecs1 = {row.sentence[0]: row.model for row
-                 in model.transform(df.withColumnRenamed("word1", "sentence")).collect()}
-    wordvecs2 = {row.sentence[0]: row.model for row
-                 in model.transform(df.withColumnRenamed("word2", "sentence")).collect()}
+        wordvecs1 = {row.sentence[0]: row.model for row
+                     in model.transform(df.withColumnRenamed("word1", "sentence")).collect()}
+        wordvecs2 = {row.sentence[0]: row.model for row
+                     in model.transform(df.withColumnRenamed("word2", "sentence")).collect()}
 
-    wordvecs = {}
-    wordvecs.update(wordvecs1)
-    wordvecs.update(wordvecs2)
-    # remove words with zero vectors
-    wordvecs = {word: vector for (word, vector) in wordvecs.items() if any(vector)}
+        wordvecs = {}
+        wordvecs.update(wordvecs1)
+        wordvecs.update(wordvecs2)
+        # remove words with zero vectors
+        wordvecs = {word: vector for (word, vector) in wordvecs.items() if any(vector)}
+    else:
+        wordvecs = {}
+        with open(tsv_filename, "r") as tsv_file:
+            for line in tsv_file:
+                row = line.split("\t")
+                word1 = row[0]
+                word2 = row[1]
+                if word1 in model.wv and word2 in model.wv:
+                    wordvecs[word1] = model.wv[word1]
+                    wordvecs[word2] = model.wv[word2]
+
     return wordvecs
 
 
@@ -64,26 +89,36 @@ def wordvecs_from_wordsim353(spark, model, language):
 
 
 def word_synonyms(words1, model):
-    return [model.findSynonyms(word1, 5).head(5) for word1 in words1]
+    if hasattr(model, 'findSynonyms'):
+        return [[(row.asDict()["word"], row.asDict()["similarity"])
+                 for row in model.findSynonyms(word1, 5).head(5)] for word1 in words1]
+    else:
+        return [model.most_similar([word1], topn=5) for word1 in words1 if word1 in model.wv]
 
 
 def print_word_synonyms(words1, predicted_synonyms):
     for predicted_synonym, word1 in zip(predicted_synonyms, words1):
-        words = [ps.asDict()["word"].encode("utf-8") for ps in predicted_synonym]
-        similarities = [round(ps.asDict()["similarity"], 4) for ps in predicted_synonym]
+        words = [word.encode("utf-8") for word, _ in predicted_synonym]
+        similarities = [round(similarity, 4) for _, similarity in predicted_synonym]
         print("Predicted synonyms {} for {} with similarity {}".format(words, word1.encode("utf-8"), similarities))
 
 
-def word_analogies(wordvecs1, wordvecs2):
+def word_analogies(wordvecs1, wordvecs2, words1, words2):
     word2_minus_word1_vec = wordvecs2[0] - wordvecs1[0]
-    return [model.findSynonyms(word2_minus_word1_vec + wordvec1, 5).head(5) for wordvec1 in wordvecs1]
+    if hasattr(model, 'findSynonyms'):
+        return [[(row.asDict()["word"], row.asDict()["similarity"])
+                 for row in model.findSynonyms(word2_minus_word1_vec + wordvec1, 5).head(5)] for wordvec1 in wordvecs1]
+    else:
+        base_word2 = words2[0] if words2[0] in model.wv else zeros(model.wv.vector_size)
+        return [model.most_similar(positive=[base_word2, word1], negative=[word1], topn=5)
+                for word1, word2 in zip(words1, words2) if word1 in model.wv and word2 in model.wv]
 
 
 def print_word_analogies(words1, words2, predicted_words2):
     num_correct = 0
     for word1, word2, predicted_word2 in zip(words1, words2, predicted_words2):
-        words = [pw.asDict()["word"].encode("utf-8") for pw in predicted_word2]
-        similarities = [round(pw.asDict()["similarity"], 4) for pw in predicted_word2]
+        words = [word.encode("utf-8") for word, _ in predicted_word2]
+        similarities = [round(similarity, 4) for _, similarity in predicted_word2]
         print("Predicted analogies {} for {} with similarity {}".format(words, word1.encode("utf-8"), similarities))
         if words[0] == word2.encode("utf-8"):
             num_correct += 1
@@ -189,48 +224,50 @@ parser = ArgumentParser(description="Evaluate and visualize word analogies like 
 parser.add_argument("csvPath", help="The path to the csv containing the word analogies to predict")
 parser.add_argument("language", help="The language of the simlex and wordsim353 evaluation set to use", choices=("de", "en"))
 parser.add_argument("modelPath", help="The path of the directory containing the trained model")
-parser.add_argument("modelType", help="The type of model to train", choices=("glint", "ml"))
+parser.add_argument("modelType", help="The type of model to train", choices=("glint", "ml", "gensim"))
 parser.add_argument("visualizationPath", help="The path to save the visualization to")
 args = parser.parse_args()
 
 
-from ml_glintword2vec import ServerSideGlintWord2VecModel
+if args.modelType == "glint" or args.modelType == "ml":
+    # initialize spark session with required settings
+    spark = SparkSession.builder \
+        .appName("evaluate word2vec") \
+        .config("spark.driver.maxResultSize", "0") \
+        .config("spark.kryoserializer.buffer.max", "2047m") \
+        .config("spark.rpc.message.maxSize", "2047") \
+        .config("spark.sql.catalogImplementation", "in-memory") \
+        .config("spark.dynamicAllocation.enabled", "false") \
+        .getOrCreate()
 
-
-# initialize spark session with required settings
-spark = SparkSession.builder \
-    .appName("evaluate word2vec") \
-    .config("spark.driver.maxResultSize", "0") \
-    .config("spark.kryoserializer.buffer.max", "2047m") \
-    .config("spark.rpc.message.maxSize", "2047") \
-    .config("spark.sql.catalogImplementation", "in-memory") \
-    .config("spark.dynamicAllocation.enabled", "false") \
-    .getOrCreate()
-
-sc = spark.sparkContext
-
+    sc = spark.sparkContext
+else:
+    spark = None
+    sc = None
 
 # load model
 if args.modelType == "glint":
+    from ml_glintword2vec import ServerSideGlintWord2VecModel
     model = ServerSideGlintWord2VecModel.load(args.modelPath)
-else:
+elif args.modelType == "ml":
     model = Word2VecModel.load(args.modelPath)
+else:
+    model = GensimWord2Vec.load(args.modelPath)
 
-
-# get required vectors with model on spark
+# get required vectors with model
 words1, words2, wordvecs1, wordvecs2 = words_and_vecs_from_csv(spark, model, args.csvPath)
 simlex_wordvecs = wordvecs_from_simlex(spark, model, args.language)
 ws353_wordvecs = wordvecs_from_wordsim353(spark, model, args.language)
 predicted_synonyms = word_synonyms(words1, model)
-predicted_words2 = word_analogies(wordvecs1, wordvecs2)
+predicted_words2 = word_analogies(wordvecs1, wordvecs2, words1, words2)
 
-
-# stop model and spark
+# stop model
 if args.modelType == "glint":
     model.stop()
 
-sc.stop()
-
+# shutdown Spark application
+if sc:
+    sc.stop()
 
 # evaluate and print results
 print_word_synonyms(words1, predicted_synonyms)
