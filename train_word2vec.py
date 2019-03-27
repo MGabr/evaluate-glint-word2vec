@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
+from time import time
 
 from pyspark.ml.feature import Word2Vec, StopWordsRemover
 from pyspark.sql import SparkSession
@@ -116,6 +117,8 @@ def train_gensim():
 	from gensim.corpora.textcorpus import lower_to_unicode
 	from gensim.models import Word2Vec as GensimWord2Vec
 
+	start = time()
+
 	stopwords = []
 	if args.stop_word_lang:
 		# starting spark only for this...
@@ -146,6 +149,9 @@ def train_gensim():
 	model.build_vocab(corpus.get_texts())
 	model.train(corpus.get_texts(), total_examples=model.corpus_count, epochs=model.epochs)
 	model.save(args.modelPath)
+
+	end = time()
+	print("Gensim training took {} seconds".format(end - start))
 
 
 if args.modelType == "glint" or args.modelType == "ml":
