@@ -71,8 +71,8 @@ def wordvecs_from_tsv(spark, model, tsv_filename):
         with open(tsv_filename, "r") as tsv_file:
             for line in tsv_file:
                 row = line.split("\t")
-                word1 = row[0]
-                word2 = row[1]
+                word1 = row[0].lower()
+                word2 = row[1].lower()
                 if word1 in model.wv and word2 in model.wv:
                     wordvecs[word1] = model.wv[word1]
                     wordvecs[word2] = model.wv[word2]
@@ -109,8 +109,9 @@ def word_analogies(wordvecs1, wordvecs2, words1, words2):
         return [[(row.asDict()["word"], row.asDict()["similarity"])
                  for row in model.findSynonyms(word2_minus_word1_vec + wordvec1, 5).head(5)] for wordvec1 in wordvecs1]
     else:
+        base_word1 = words1[0] if words1[0] in model.wv else zeros(model.wv.vector_size)
         base_word2 = words2[0] if words2[0] in model.wv else zeros(model.wv.vector_size)
-        return [model.most_similar(positive=[base_word2, word1], negative=[word1], topn=5)
+        return [model.most_similar(positive=[base_word2, word1], negative=[base_word1], topn=5)
                 for word1, word2 in zip(words1, words2) if word1 in model.wv and word2 in model.wv]
 
 

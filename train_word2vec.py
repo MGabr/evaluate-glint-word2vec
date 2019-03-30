@@ -144,7 +144,8 @@ def train_gensim():
 		alpha=args.step_size,
 		size=args.vector_size,
 		window=args.window_size,
-		sample=1e-6
+		sample=1e-6,
+        sg=1
 	)
 	model.build_vocab(corpus.get_texts())
 	model.train(corpus.get_texts(), total_examples=model.corpus_count, epochs=model.epochs)
