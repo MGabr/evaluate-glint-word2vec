@@ -1,7 +1,7 @@
 # Glint-Word2Vec Evaluation
 
-Scripts for comparing the default Spark ML implementation of Word2Vec with a custom 
-implementation of Word2Vec using the Glint parameter server with custom specialized 
+Scripts for comparing the default Spark ML implementation of Word2Vec or the Gensim implementation
+with a custom implementation of Word2Vec using the Glint parameter server with specialized 
 operations for efficient distributed Word2Vec computation.
 
 ## Usage
@@ -23,6 +23,8 @@ to a text file with ``get_texts.py``. For testing, a subset of articles from a w
 dump can be created with ``get_analogy_texts.py``. Another possibility is getting 
 specific wikipedia articles with ``get_articles_texts.py``. The articles to get will need
 to be specified as txt file. An example is ``example_country_capitals_de_articles.txt``.
+Another option is using the script ``demo-download-big-model-v1.sh`` as used in the original
+word2vec open source implementation.
 
 ### Training and evaluating
 
@@ -31,7 +33,7 @@ and the python binding file ``ml_glintword2vec.py`` as zip from
 https://github.com/MGabr/glint-word2vec. These will have to be specified as ``--jars`` 
 and ``--py-files`` options of ``spark-submit``.
 
-``train_word2vec.py`` can then be used to train a Glint or standard Spark ML model and 
+``train_word2vec.py`` can then be used to train a Glint, Gensim or standard Spark ML model and 
 ``evaluate_word2vec.py`` to evaluate and visualize word analogies using a model.
 
 In most cases you will want to remove stop words before training a model to avoid 
