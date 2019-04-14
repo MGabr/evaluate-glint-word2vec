@@ -4,6 +4,8 @@ Scripts for comparing the default Spark ML implementation of Word2Vec or the Gen
 with a custom implementation of Word2Vec using the Glint parameter server with specialized 
 operations for efficient distributed Word2Vec computation.
 
+The [project report](https://github.com/MGabr/evaluate-glint-word2vec/blob/master/project_report.pdf) sums up experiments performed.
+
 ## Usage
 
 ### Evaluation sets
